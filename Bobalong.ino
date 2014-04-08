@@ -29,7 +29,7 @@ HMC6343 Compass;
 BoatData Boat;
 TinyGPSPlus gps;
 Rowind rowind(ROWIND_PIN,5);
-SoftwareSerial ss(GPS_RXPIN,GPS_TXPIN);
+SoftwareSerial gps(GPS_RXPIN,GPS_TXPIN);
 
 
 Servo rudder;
@@ -39,7 +39,7 @@ int m_DestHeading;
 /////////////////////////////////////////////////////////////////
 void setup() {
 	Serial.begin(9600);
-	ss.begin(4800);
+	gps.begin(4800);
 	
 	// Light up debugger LED
 	pinMode(13, OUTPUT);
@@ -71,7 +71,7 @@ void setup() {
 void loop() {
 	// LED debugger
 	digitalWrite(13, HIGH);
-	ss.listen();
+	gps.listen();
 	// Update data
 	UpdateCompass();
 	UpdateGPS();
@@ -100,10 +100,10 @@ void UpdateCompass() {
 
 
 void UpdateGPS(){
-	while (ss.available()>0)
+	while (gps.available()>0)
 	{  
 		delay(1);
-		if (gps.encode(ss.read()))
+		if (gps.encode(gps.read()))
 		{
 			// Debugger LED
 			digitalWrite(13, LOW);
