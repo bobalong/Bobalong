@@ -105,9 +105,9 @@ void loop() {
   digitalWrite(13, HIGH);
   // Update data
   Serial.println("Updating compass!");
-  //UpdateCompass();
+  UpdateCompass();
   Serial.println("Updating GPS!");
-  //UpdateGPS();
+  UpdateGPS();
   delay(77);
   Serial.println("Updating wind!");
   UpdateWind();

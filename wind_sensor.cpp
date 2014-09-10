@@ -12,6 +12,8 @@
 #include "pin_defs.h"
 #include <SoftwareSerial.h>
 
+#define DEBUG_ROWIND
+
 SoftwareSerial wind_ss(_RX_4, _TX_4);
 
 //////////////////////////////////////////////////////////////////////////
@@ -54,43 +56,61 @@ bool WindSensor::Read(WindData& wind_data)
 //////////////////////////////////////////////////////////////////////////
 char* WindSensor::GetNMEA()
 {
-	char line[50];
-	bool gotData = false;
-	unsigned long endTime = millis() + 5000;
+	char nmea_buffer[50];
+	bool got_data = false;
+	unsigned long timeout = millis() + 5000;
 
-	// Search for the correct rowind data line, this might could be 
-	// cleaned up I think
-	while(!gotData && millis() < endTime) {
-		char c = wind_ss.read();
+#ifdef DEBUG_ROWIND
+	Serial.println("Reading RoWind serial...");
+	delay(1000);
+#endif
+
+	// Keep going until we either get the correct data or timeout after
+	// 5 seconds
+	while(!got_data & millis() <= timeout) {
+		// Gives the rowind enough time to send a char
 		delay(3);
-		// Start of a rowind sentence
-		if(c == '$') {
-			Serial.println();
-			Serial.print("Roind NMEA: ");
-			int i = 0;
+		char c = wind_ss.read();
 
-	       	// Reads a line
-			while(c != '\n' && i < 80) {
-				line[i] = c;
+		#ifdef DEBUG_ROWIND
+		Serial.print(c);
+		#endif
+
+		// Check if the char is the start of a nmea string
+		if(c == '$') {
+			#ifdef DEBUG_ROWIND
+			// Starts a new line on the debug terminal, for better viewing
+			Serial.println();
+			#endif
+
+			// Once we know we are at the start of a nmea string we read
+			// until we hit the end of the string and store it in a buffer
+			int i = 0;
+			while(c != '\n' & i < 50) {
+				nmea_buffer[i] = c;
+
+				#ifdef DEBUG_ROWIND
 				Serial.print(c);
+				#endif
+
 				c = wind_ss.read();
-				delay(3);
 				i++;
 			}
 
-			// Data we want starts with $IIMWV
-			if(line[1] == 'I') {
-				gotData = true;
+			// Now check if we have a $IIMWV nmea string
+			if(nmea_buffer[1] == 'I') {
+				got_data = true;
+				#ifdef DEBUG_ROWIND
+				Serial.println("Found $IIMWV");
+				#endif
 			}
 		}
 	}
 
-	Serial.println();
-        
-    if(!gotData) {
-    	Serial.println("Rowind: Failed to find the right or any NMEA ")
+    if(!got_data) {
+    	Serial.println("Rowind timeout");
         return 0;
     }
         
-	return line;
+	return nmea_buffer;
 }

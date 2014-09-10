@@ -31,7 +31,11 @@ double Navigation::GetDistance(GPSPosition pos_0, GPSPosition pos_1)
 	double lon_rad1 = pos_0.longitude * MATH_DEG_TO_RAD;
 	double lon_rad2 = pos_1.longitude * MATH_DEG_TO_RAD;
 
-	
+	double t1 = Math.cos(lat_rad1)*Math.cos(lon_rad1)*Math.cos(lat_rad2)*Math.cos(lon_rad2);
+	double t2 = Math.cos(lat_rad1)*Math.sin(lon_rad1)*Math.cos(lat_rad2)*Math.sin(lon_rad2);
+	double t3 = Math.sin(lat_rad1) * Math.sin(lat_rad2);
+	double tt = Math.acos(t1 + t2 + t3);
+return 6366000*tt;
 }
 
 //////////////////////////////////////////////////////////////////////////
