@@ -5,6 +5,7 @@
 #include <SoftwareSerial.h>
 #include <FileIO.h>
 #include <Time.h>
+
 /////////////////////////////////////////////////////////////////
 // Boat libraries
 #include "type_defs.h"
@@ -28,6 +29,8 @@
 #define TACK_DISTANCE			25 // In metres
 #define RUDDER_CHANGE_FREG		5 // The number of loops before we update the rudder
 #define RUDDER_P_COEF			0.5f
+#define HOLDING_DISTANCE_MIN	1; // In metres
+#define HOLDING_DISTANCE_MAX	5; // In metres
 
 /////////////////////////////////////////////////////////////////
 // Variables
@@ -55,6 +58,9 @@ bool tack_left;
 int tack_heading;
 GPSPosition tack_pos;
 
+// Holding 
+bool reversing;
+
 //////////////////////////////////////////////////////////////////////////
 void setup() {
 	WindSensor::Initialise();
@@ -77,8 +83,9 @@ void setup() {
 	current_mode = SM_HOLD;
 	change_tack = true;
 	tack_left = true;
-        desired_heading = 0;
+    desired_heading = 0;
 	rudder_freq_counter = RUDDER_CHANGE_FREG;
+	reversing = false;
 
 	// Reset servos
 	sail.write(90);
@@ -124,8 +131,8 @@ void loop() {
 	// stuck somewhere.
 	digitalWrite(13,LOW);
 	
-	// Don't update or log for 3 seconds
-	delay(300);
+	// Don't update or log for 1 second
+	delay(100);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -162,26 +169,22 @@ void UpdateGPS(){
 
 //////////////////////////////////////////////////////////////////////////
 void LogData() {
-	File log  = FileSystem.open("/mnt/sd/boat_log.txt", FILE_APPEND);
-
 	// Time
-	log.print("time="); log.print(now()); log.println(" ");
+	Serial1.print("time="); Serial1.print(now()); Serial1.print(" ");
 	// Boat Heading
-	log.print("bhead="); log.print(boat.bearing.heading); log.print(" ");
+	Serial1.print("bhead="); Serial1.print(boat.bearing.heading); Serial1.print(" ");
 	// GPS Heading
-	log.print("gpshead="); log.print(boat.course.bearing); log.print(" ");
+	Serial1.print("gpshead="); Serial1.print(boat.course.bearing); Serial.print(" ");
 	// Speed
-	log.print("knots="); log.print(boat.course.speed); log.print(" ");
+	Serial1.print("knots="); Serial1.print(boat.course.speed); Serial1.print(" ");
 	// Boat Wind Dir
-	log.print("wind="); log.print(boat.wind.direction); log.print(" ");
+	Serial1.print("wind="); Serial1.print(boat.wind.direction); Serial1.print(" ");
 	// Wind speed
-	log.print("windSpd="); log.print(boat.wind.speed); log.print(" ");
+	Serial1.print("windSpd="); Serial1.print(boat.wind.speed); Serial1.print(" ");
 	// Lat
-	log.print("lat="); log.print(boat.position.latitude,5); log.print(" ");
+	Serial1.print("lat="); Serial1.print(boat.position.latitude,5); Serial1.print(" ");
 	// Long
-	log.print("lon="); log.print(boat.position.longitude,5); log.println(" ");
-
-	log.close();
+	Serial1.print("lon="); Serial1.print(boat.position.longitude,5); Serial1.println(" ");
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -196,7 +199,6 @@ void SailMode_Normal()
 			return;
 		}
 		
-
 		// Decide if we need to tack
 		if(ShouldTack()) {
 			current_mode = SM_TACKING;
@@ -215,8 +217,29 @@ void SailMode_Normal()
 //////////////////////////////////////////////////////////////////////////
 void SailingMode_Hold()
 {
-	// TODO: DOes nothing right now
-	// Face the sail to be forward facing the wind
+	// When in hold mode, the boat will try to hold its current position	
+	if(!reversing) {/*
+		if(Navigation::GetDistance(boat.position, WaypointMgr::GetCurrentWaypoint()) <= HOLDING_DISTANCE_MIN) {
+			reversing = !reversing;
+		}*/
+
+		// set the sails
+		if(relative_wind < 180) {
+			sail.write(SAIL_RIGHT);
+		} else {
+			sail.write(SAIL_LEFT);
+		}
+	} else {/*
+		if(Navigation::GetDistance(boat.position, WaypointMgr::GetCurrentWaypoint()) >= HOLDING_DISTANCE_MAX) {
+			reversing = !reversing;
+		}*/
+		// set the sails
+		if(relative_wind > 180) {
+			sail.write(SAIL_RIGHT);
+		} else {
+			sail.write(SAIL_LEFT);
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
