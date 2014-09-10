@@ -9,9 +9,9 @@
 #ifndef PIN_DEF_H
 #define PIN_DEF_H
 
-// ROWIND
-#define _TX_1 	12
-#define _RX_1 	11
+// XBee
+#define _TX_1 	11
+#define _RX_1 	12
 
 // GPS
 #define _TX_2 	4
@@ -20,7 +20,7 @@
 #define _TX_3 	7
 #define _RX_3 	10
 
-#define _TX_4 	6
+#define _TX_4 	A3
 #define _RX_4 	8
 
 

@@ -21,25 +21,29 @@ bool Compass::GetBearing(BearingData& bearing)
 bool Compass::Read(byte reg, int& v0, int& v1, int& v2 )
 {
 	byte high, low;
-	unsigned long timeout = 100;
+	unsigned long timeout = 1000;
 	unsigned long last_time;
-
+        
 	// Start the communication with the I2C device
 	Wire.beginTransmission(HMC6343_ADDRESS);
-
+    Serial.println("Compass: BEGIN");
 	// Send the address of the registers we want to read
 	Wire.write(reg);
+	Serial.println("Compass: WRITE");
 	Wire.endTransmission();
+    Serial.println("Compass: END TRANSMISSION");
 
 	// Requests 6 bytes from the compass and then a stop condition is
 	// sent releaing the bus.
 	Wire.requestFrom(HMC6343_ADDRESS, 6, true);
-
+    Serial.println("Compass: REQUEST 6 bytes");
 	 // Wait for the data, return false marking the read as failed if
 	 // we go over the waiting time
 	last_time = millis();
-	while(Wire.available() < 2) {
-		if(millis() - last_time > timeout) {
+	while(Wire.available() < 6) {
+                Serial.print("COMPASS: Timeout left="); Serial.println(millis() - last_time);
+		if(last_time + timeout > millis()) {
+			Serial.println("Compass: TIMEOUT");
 			return false;
 		}
 	}

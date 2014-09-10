@@ -12,7 +12,7 @@
 #include "pin_defs.h"
 #include <SoftwareSerial.h>
 
-SoftwareSerial wind_ss(_RX_1, _TX_1);
+SoftwareSerial wind_ss(_RX_4, _TX_4);
 
 //////////////////////////////////////////////////////////////////////////
 void WindSensor::Initialise()
@@ -25,7 +25,6 @@ bool WindSensor::Read(WindData& wind_data)
 {
 	wind_ss.listen();
   	char* line = GetNMEA();
-
   	// Make sure nothing went wrong and that we have a valid line
   	if(line == 0) {
   		return false;
@@ -57,7 +56,7 @@ char* WindSensor::GetNMEA()
 {
 	char line[50];
 	bool gotData = false;
-	unsigned long endTime = millis() + 1000;
+	unsigned long endTime = millis() + 5000;
 
 	// Search for the correct rowind data line, this might could be 
 	// cleaned up I think
@@ -66,11 +65,14 @@ char* WindSensor::GetNMEA()
 		delay(3);
 		// Start of a rowind sentence
 		if(c == '$') {
+			Serial.println();
+			Serial.print("Roind NMEA: ");
 			int i = 0;
 
 	       	// Reads a line
-			while(c != '\n' & i < 80) {
+			while(c != '\n' && i < 80) {
 				line[i] = c;
+				Serial.print(c);
 				c = wind_ss.read();
 				delay(3);
 				i++;
@@ -82,9 +84,13 @@ char* WindSensor::GetNMEA()
 			}
 		}
 	}
+
+	Serial.println();
         
-    if(!gotData)
+    if(!gotData) {
+    	Serial.println("Rowind: Failed to find the right or any NMEA ")
         return 0;
+    }
         
 	return line;
 }
